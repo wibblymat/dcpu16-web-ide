@@ -37,11 +37,11 @@ assembler = {
 		this.replacements = {};
 
 		var pc = 0;
-		var binary = "";
+		var program = [];
 
 		for( index in this.code )
 		{
-			var line = this.code[ index ].toLowerCase();
+			var line = this.code[ index ];
 			var commentStart = line.indexOf( ";" );
 			if( commentStart != -1 )
 			{
@@ -59,14 +59,14 @@ assembler = {
 			else
 			{
 				// Binary operators
-				matches = line.match( /^(set|add|sub|mul|div|mod|shl|shr|and|bor|xor|ife|ifn|ifg|ifb)\s+(.+)\s*,\s*(.+)/ );
+				matches = line.toLowerCase().match( /^(set|add|sub|mul|div|mod|shl|shr|and|bor|xor|ife|ifn|ifg|ifb)\s+(.+)\s*,\s*(.+)/ );
 				if( matches != null )
 				{
 					var o = this.operators[ matches[ 1 ] ];
 					var a = this.getValue( matches[ 2 ] );
 					var b = this.getValue( matches[ 3 ] );
 
-					binary += String.fromCharCode( o | a.value<<4 | b.value<<10 );
+					program.push( o | a.value<<4 | b.value<<10 );
 					pc++
 
 					// Hmm, repeated code!
@@ -78,7 +78,7 @@ assembler = {
 							if( this.replacements[ a.replacement ] == null ) this.replacements[ a.replacement ] = [];
 							this.replacements[ a.replacement ].push( pc );
 						}
-						binary += String.fromCharCode( a.word );
+						program.push( a.word );
 					}
 					if( b.word != null )
 					{
@@ -88,12 +88,41 @@ assembler = {
 							this.replacements[ b.replacement ].push( pc );
 						}
 						pc++;
-						binary += String.fromCharCode( b.word );
+						program.push( b.word );
 					}
 				}
 				else
 				{
-					// Need to do JSR and dat too
+					// At the moment the dat case is trivial - only a single value
+					matches = line.match( /^dat\s+(.*$)/i )
+					if( matches != null )
+					{
+						var tail = matches[ 1 ];
+						while( tail != null && tail.length > 0 )
+						{
+							var parts = tail.match( /^(?:((?:0x)?[0-9a-f]{1,4})|"([^"]*)")(?:,\s+(.*))?$/ );
+							tail = parts[ 3 ];
+
+							if( parts[ 1 ] )
+							{
+								program.push( parseInt( parts[ 1 ] ) );
+								pc++;
+							}
+							else
+							{
+								// String
+								for( var i = 0; i < parts[ 2 ].length; i++ )
+								{
+									program.push( parts[ 2 ].charCodeAt( i ) );
+									pc++;
+								}
+							}
+						}
+					}
+					else
+					{
+						// Check for JSR here
+					}
 				}
 			}
 		}
@@ -106,12 +135,12 @@ assembler = {
 			{
 				var position = label[ positionIndex ];
 
-				binary = binary.substr( 0, position ) + String.fromCharCode( this.symbols[ labelIndex ] ) + binary.substr( position + 1 );
+				program[ position ] = this.symbols[ labelIndex ];
 
 			}
 		}
 
-		return binary;
+		return program;
 	},
 	'getValue': function( data )
 	{
@@ -139,8 +168,16 @@ assembler = {
 			var match = data.match( /^(\w{2,}|(?:0x)?[0-9a-f]{1,4})$/ );
 			if( match )
 			{
-				result.value = 0x1f;
-				result.word = match[ 1 ];
+				var value = parseInt( match[ 1 ] );
+				if( !isNaN( value ) && ( value & 0xffe0 ) == 0 )
+				{
+					result.value = 0x20 | value;
+				}
+				else
+				{
+					result.value = 0x1f;
+					result.word = match[ 1 ];
+				}
 			}
 
 			var match = data.match( /^\((\w{2,}|(?:0x)?[0-9a-f]{1,4})\)$/ );

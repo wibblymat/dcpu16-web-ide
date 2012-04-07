@@ -1,0 +1,4 @@
+editor = {
+	'div': null,
+	'lines': []
+}

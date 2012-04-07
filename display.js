@@ -3,25 +3,30 @@ display = {
 	'canvas': null,
 	'context': null,
 	'lastFrame': null,
+	'fontWidth': 0,
 	'begin': function( emulator, canvas )
 	{
 		this.emulator = emulator;
 		this.canvas = canvas;
 		this.context = canvas.getContext( "2d" );
-		this.canvas.width = 16 * 32;
-		this.canvas.height = 16 * 16;
 
-		this.context.font = '16px Consolas';
+		this.context.font = '32px Consolas, "Courier New", monospace';
+		this.fontWidth = this.context.measureText( "M" ).width;
+
+		this.canvas.width = this.fontWidth * 32;
+		this.canvas.height = 32 * 16;
+
+		// Have to set font again as resizing the canvas nukes the context...
+		this.context.font = '32px Consolas, "Courier New", monospace';
 		this.context.textAlign = 'left';
 		this.context.textBaseline = 'top';
 
-		this.emulator.run();
 		this.draw();
 	},
 	'draw': function()
 	{
 		this.context.fillStyle = "black";
-		this.context.rect( 0, 0, 16 * 32, 16 * 16 );
+		this.context.rect( 0, 0, this.canvas.width, this.canvas.height );
 		this.context.fill();
 
 		this.context.fillStyle = 'white';
@@ -31,8 +36,8 @@ display = {
 			for( var x = 0; x < 32; x++ )
 			{
 				var value = this.emulator.memory[ 0x8000 + ( 32 * y ) + x ];
-				var character = value & 0x00ff;
-				this.context.fillText( String.fromCharCode( character ), x * 16, y * 16 );
+				var character = value & 0x007f;
+				this.context.fillText( String.fromCharCode( character ), x * this.fontWidth, y * 32 );
 			}
 		}
 

@@ -9,8 +9,21 @@
 		<link rel="stylesheet" type="text/css" href="emulator.css" />
 	</head>
 	<body onload="display.begin( emulator, document.getElementById( 'display' ) );">
-		<canvas id="display"></canvas> <input type="button" value="Assemble" onclick="emulator.load( assembler.assemble( document.getElementById( 'code' ).value ) );"/>
-		<textarea id="code" style="width: 800px; height: 600px;">
+		<canvas id="display"></canvas>
+		<br />
+		<input type="button" value="Assemble and Load" onclick="emulator.stop(); emulator.reset(); emulator.load( assembler.assemble( document.getElementById( 'code' ).value ) );"/>
+		<input type="button" value="Start" onclick="emulator.run();"/>
+		<input type="button" value="Stop" onclick="emulator.stop();"/>
+		<input type="button" value="Reset" onclick="emulator.reset();"/>
+		<select onchange="document.getElementById( 'code' ).innerText = document.getElementById( this.value ).innerText;">
+			<option value="blank.asm">[Blank]</option>
+			<option value="notch-hello.asm">Notch's Hello World</option>
+		</select>
+		<br />		
+		<textarea id="code">
+		</textarea>
+<pre style="display: none;" id="blank.asm"></pre>
+<pre style="display: none;" id="notch-hello.asm">
 ; Assembler test for DCPU
 ; by Markus Persson
 
@@ -45,6 +58,6 @@
 
 :end
 	set PC, start
-		</textarea>
+</pre>
 	</body>
 </html>

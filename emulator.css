@@ -1,2 +1,4 @@
-#code { font-family: Consolas, "Courier New", monospace; font-size: 12pt; background-color: #272822; color: #F8F8F2; }
+body { position: relative; }
+#code { font-family: Consolas, "Courier New", monospace; font-size: 12pt; background-color: #272822; color: #F8F8F2; width: 576px; height: 480px;"}
 #code .comment { color: #75715E; }
+#display { }
